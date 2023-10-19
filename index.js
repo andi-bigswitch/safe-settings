@@ -417,6 +417,7 @@ module.exports = (robot, { getRouter }, Settings = require('./lib/settings')) =>
     const { check_suite } = check_run
     const pull_request = check_suite.pull_requests[0]
     const source = payload.check_run.name === 'Safe-setting validator'
+    robot.log.trace(`Check run context: ${JSON.stringify(context)}`)
     if (!source) {
       robot.log.debug(' Not triggered by Safe-settings...')
       return
