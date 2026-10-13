@@ -148,5 +148,58 @@ describe('Labels', () => {
         expect(github.rest.issues.createLabel).toHaveBeenCalledTimes(1)
       })
     })
+
+    it('pads colors that YAML read as numbers', () => {
+      github.paginate.mockReturnValueOnce(Promise.resolve([]))
+
+      const plugin = configure([
+        { name: 'black', color: 0, description: '' }, // YAML treats `color: 000000` as 0
+        { name: 'almost-black', color: 1, description: '' } // YAML treats `color: 000001` as 1
+      ])
+
+      return plugin.sync().then(() => {
+        const createdColors = github.rest.issues.createLabel.mock.calls.map(([params]) => params.color)
+        expect(createdColors).toEqual(['000000', '000001'])
+      })
+    })
+
+    describe('invalid colors', () => {
+      // YAML treats `color: 5319e7` as 5319 × 10^7
+      const config = [{ name: 'jenkins-sync', color: 5319e7, description: '' }]
+      const expectedMessage = "Label 'jenkins-sync' has invalid color '53190000000'. Quote hex colors in YAML, e.g. color: '5319e7'."
+
+      it('reports an error instead of creating the label', () => {
+        github.paginate.mockReturnValueOnce(Promise.resolve([]))
+        log.error = jest.fn()
+        const errors = []
+        const plugin = new Labels(false, github, { owner: 'bkeepers', repo: 'test' }, config, log, errors)
+
+        return plugin.sync().then(() => {
+          expect(github.rest.issues.createLabel).not.toHaveBeenCalled()
+          expect(errors).toEqual([expect.objectContaining({ msg: expectedMessage, plugin: 'Labels' })])
+        })
+      })
+
+      it('reports an error instead of updating the label', () => {
+        github.paginate.mockReturnValueOnce(Promise.resolve([{ name: 'jenkins-sync', color: '5319e7', description: '' }]))
+        log.error = jest.fn()
+        const errors = []
+        const plugin = new Labels(false, github, { owner: 'bkeepers', repo: 'test' }, config, log, errors)
+
+        return plugin.sync().then(() => {
+          expect(github.rest.issues.updateLabel).not.toHaveBeenCalled()
+          expect(errors).toEqual([expect.objectContaining({ msg: expectedMessage })])
+        })
+      })
+
+      it('shows the error in the dry-run', () => {
+        github.paginate.mockReturnValueOnce(Promise.resolve([]))
+        const plugin = new Labels(true, github, { owner: 'bkeepers', repo: 'test' }, config, log, [])
+
+        return plugin.sync().then(results => {
+          expect(results.flat()).toContainEqual(expect.objectContaining({ type: 'ERROR', action: expect.objectContaining({ msg: expectedMessage }) }))
+        })
+      })
+    })
   })
 })
