@@ -166,7 +166,7 @@ describe('Labels', () => {
     describe('invalid colors', () => {
       // YAML treats `color: 5319e7` as 5319 × 10^7
       const config = [{ name: 'hello-world', color: 5319e7, description: '' }]
-      const expectedMessage = "Label 'hello-world' has invalid color '53190000000'. Quote hex colors in YAML, e.g. color: '5319e7'."
+      const expectedMessage = "Label 'hello-world' has invalid color '53190000000'. Colors must be 6 hex characters, e.g. '5319e7'. Quote the value in YAML so it isn't read as a number."
 
       it('reports an error instead of creating the label', () => {
         github.paginate.mockReturnValueOnce(Promise.resolve([]))
@@ -198,6 +198,18 @@ describe('Labels', () => {
 
         return plugin.sync().then(results => {
           expect(results.flat()).toContainEqual(expect.objectContaining({ type: 'ERROR', action: expect.objectContaining({ msg: expectedMessage }) }))
+        })
+      })
+
+      it('reports a quoted non-hex color as written, without padding it', () => {
+        github.paginate.mockReturnValueOnce(Promise.resolve([]))
+        log.error = jest.fn()
+        const errors = []
+        const plugin = new Labels(false, github, { owner: 'bkeepers', repo: 'test' }, [{ name: 'hello-world', color: 'red', description: '' }], log, errors)
+
+        return plugin.sync().then(() => {
+          expect(github.rest.issues.createLabel).not.toHaveBeenCalled()
+          expect(errors).toEqual([expect.objectContaining({ msg: expect.stringContaining("invalid color 'red'. Colors must be 6 hex characters") })])
         })
       })
     })
