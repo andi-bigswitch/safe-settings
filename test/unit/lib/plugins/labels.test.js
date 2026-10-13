@@ -165,8 +165,8 @@ describe('Labels', () => {
 
     describe('invalid colors', () => {
       // YAML treats `color: 5319e7` as 5319 × 10^7
-      const config = [{ name: 'jenkins-sync', color: 5319e7, description: '' }]
-      const expectedMessage = "Label 'jenkins-sync' has invalid color '53190000000'. Quote hex colors in YAML, e.g. color: '5319e7'."
+      const config = [{ name: 'hello-world', color: 5319e7, description: '' }]
+      const expectedMessage = "Label 'hello-world' has invalid color '53190000000'. Quote hex colors in YAML, e.g. color: '5319e7'."
 
       it('reports an error instead of creating the label', () => {
         github.paginate.mockReturnValueOnce(Promise.resolve([]))
@@ -181,7 +181,7 @@ describe('Labels', () => {
       })
 
       it('reports an error instead of updating the label', () => {
-        github.paginate.mockReturnValueOnce(Promise.resolve([{ name: 'jenkins-sync', color: '5319e7', description: '' }]))
+        github.paginate.mockReturnValueOnce(Promise.resolve([{ name: 'hello-world', color: '5319e7', description: '' }]))
         log.error = jest.fn()
         const errors = []
         const plugin = new Labels(false, github, { owner: 'bkeepers', repo: 'test' }, config, log, errors)
