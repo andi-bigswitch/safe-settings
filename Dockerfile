@@ -1,4 +1,4 @@
-FROM node:22-alpine@sha256:4d64b49e6c891c8fc821007cb1cdc6c0db7773110ac2c34bf2e6960adef62ed3
+FROM node:22.23.4-alpine3.23@sha256:6abbcf5dd6b231da109bcde1181db1d92bf78015ae1a9514d9807c1f857869db
 WORKDIR /opt/safe-settings
 ENV NODE_ENV production
 ENV HOST=0.0.0.0
